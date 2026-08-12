@@ -508,20 +508,6 @@ This project provided hands-on practice with:
 
 **Sumit Zarkhande**
 
-DevOps / Cloud Engineering Learner
+DevOps / Cloud Engineer
 
-GitHub:
 
-```text
-https://github.com/YOUR_USERNAME
-```
-
-LinkedIn:
-
-```text
-YOUR_LINKEDIN_URL
-```
-
-## Disclaimer
-
-This project is created for learning and hands-on DevOps practice.
