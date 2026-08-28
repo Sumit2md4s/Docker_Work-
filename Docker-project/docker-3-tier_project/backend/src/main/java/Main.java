@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -24,7 +23,7 @@ public class Main {
                 Path.of("/run/secrets/mysql_root_password")
         ).trim();
 
-        // Test MySQL connection
+        // Test MySQL connection before starting the server
         testDatabaseConnection(dbPassword);
 
         // Start HTTP server
@@ -33,17 +32,21 @@ public class Main {
                 0
         );
 
+        // =========================
+        // API Endpoint
+        // =========================
         server.createContext("/api", exchange -> {
 
             String response;
 
             try {
 
-                Connection connection = DriverManager.getConnection(
-                        DB_URL,
-                        DB_USERNAME,
-                        dbPassword
-                );
+                Connection connection =
+                        DriverManager.getConnection(
+                                DB_URL,
+                                DB_USERNAME,
+                                dbPassword
+                        );
 
                 Statement statement =
                         connection.createStatement();
@@ -89,6 +92,31 @@ public class Main {
             outputStream.close();
         });
 
+
+        // =========================
+        // Health Endpoint
+        // =========================
+        server.createContext("/health", exchange -> {
+
+            String response = "OK";
+
+            exchange.getResponseHeaders()
+                    .set("Content-Type", "text/plain");
+
+            exchange.sendResponseHeaders(
+                    200,
+                    response.getBytes().length
+            );
+
+            OutputStream outputStream =
+                    exchange.getResponseBody();
+
+            outputStream.write(response.getBytes());
+
+            outputStream.close();
+        });
+
+
         server.start();
 
         System.out.println(
@@ -97,6 +125,9 @@ public class Main {
     }
 
 
+    // =========================
+    // Database Connection Test
+    // =========================
     private static void testDatabaseConnection(
             String password
     ) {

@@ -43,7 +43,7 @@ services:
   # =========================
   backend:
 
-    image: my-backend:v7
+    image: my-backend:v8
 
     container_name: backend
 
