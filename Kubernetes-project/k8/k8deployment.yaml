@@ -1,0 +1,105 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8-deployment
+  labels:
+    app: pythonapp
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: pythonapp
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  template:
+    metadata:
+      labels:
+        app: pythonapp
+
+    spec:
+      serviceAccountName: pythonapp-sa
+
+      containers:
+        - name: pythonapp-cont
+          image: kubernetes-project-app:v4
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          # ConfigMap
+          envFrom:
+            - configMapRef:
+                name: pythonapp-config
+
+          # Secret
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: pythonapp-secret
+                  key: DB_USERNAME
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pythonapp-secret
+                  key: DB_PASSWORD
+
+          # Resource Management
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          # Readiness Probe
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          # Liveness Probe
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          # Security
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+          # Persistent Storage
+          volumeMounts:
+            - name: app-storage
+              mountPath: /app/data
+
+      # PVC
+      volumes:
+        - name: app-storage
+          persistentVolumeClaim:
+            claimName: pythonapp-pvc
+
+      terminationGracePeriodSeconds: 30
+
