@@ -1,26 +1,26 @@
 pipeline {
     agent any
-
     stages {
-
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
+                echo "Checking out source code..."
                 checkout scm
-            }
+            } 
         }
-
         stage('Build') {
             steps {
-                echo 'Building application...'
+                echo "Installing Python dependencies..."
+                sh '''
+                pip3 install -r app/requirement.txt
+                '''
             }
         }
-
+        
         stage('Test') {
             steps {
-                echo 'Testing application...'
+                echo "Running test ..."
+                sh 'python3 -m py_compile app/app.py'
             }
         }
-
     }
 }
