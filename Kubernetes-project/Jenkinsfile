@@ -15,11 +15,8 @@ pipeline {
                 echo "Installing Python dependencies..."
 
                 sh '''
-                    pwd
-                    ls -la
-                    find . -name requirement.txt
-
-                    python3 -m venv .venv
+                  
+		     python3 -m venv .venv
 
                     .venv/bin/pip install -r Kubernetes-project/app/requirement.txt
 
@@ -41,5 +38,15 @@ pipeline {
                 '''
             }
         }
+
+	stage('Docker Build') {
+	    steps {
+	        echo  "BUilding apllication on docker"
+
+		sh '''
+		docker build -f Kubernetes-project/docker/dockerfile -t python-app:latest Kubernetes-project
+		'''
+		  }
+		 }
     }
 }
