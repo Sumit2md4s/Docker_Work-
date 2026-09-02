@@ -29,8 +29,8 @@ spec:
 
       containers:
         - name: pythonapp-cont
-          image: kubernetes-project-app:v4
-          imagePullPolicy: IfNotPresent
+          image: sumit2md4s/python-app:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 8080
