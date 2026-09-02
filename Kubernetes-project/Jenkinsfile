@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "sumit2md4s/python-app"
+        IMAGE_TAG  = "${IMAGE_NAME}:${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -15,10 +20,10 @@ pipeline {
                 echo "Installing Python dependencies..."
 
                 sh '''
+                    python3 -m venv .venv
 
-                     python3 -m venv .venv
-
-                    .venv/bin/pip install -r Kubernetes-project/app/requirement.txt
+                    .venv/bin/pip install \
+                        -r Kubernetes-project/app/requirement.txt
 
                     .venv/bin/python --version
 
@@ -32,7 +37,8 @@ pipeline {
                 echo "Running application test..."
 
                 sh '''
-                    .venv/bin/python -m py_compile Kubernetes-project/app/app.py
+                    .venv/bin/python -m py_compile \
+                        Kubernetes-project/app/app.py
 
                     echo "Test completed successfully"
                 '''
@@ -41,35 +47,67 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                echo  "BUilding apllication on docker"
+                echo "Building Docker image..."
 
                 sh '''
-                docker build -f Kubernetes-project/docker/dockerfile -t python-app:latest Kubernetes-project
+                    docker build \
+                        -f Kubernetes-project/docker/dockerfile \
+                        -t $IMAGE_TAG \
+                        Kubernetes-project
                 '''
-                  }
-                 }
-                 
+            }
+        }
+
         stage('Docker Push') {
             steps {
-             echo "Pushing Docker image to Docker Hub..."
+                echo "Pushing Docker image to Docker Hub..."
 
-        withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-creds',
-            usernameVariable: 'DOCKER_USERNAME',
-            passwordVariable: 'DOCKER_PASSWORD'
-        )]) {
-            sh '''
-                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
 
-                docker tag python-app:latest $DOCKER_USERNAME/python-app:latest
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | \
+                            docker login \
+                            -u "$DOCKER_USERNAME" \
+                            --password-stdin
 
-                docker push $DOCKER_USERNAME/python-app:latest
+                        docker push $IMAGE_TAG
 
-                docker logout
-            '''
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo "Deploying application to Kubernetes..."
+
+                sh '''
+                    kubectl set image deployment/k8-deployment \
+                        pythonapp-cont=$IMAGE_TAG \
+                        -n default
+
+                    kubectl rollout status deployment/k8-deployment \
+                        -n default \
+                        --timeout=120s
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo "Verifying Kubernetes deployment..."
+
+                sh '''
+                    kubectl get deployment k8-deployment -n default
+                    kubectl get pods -n default
+                    kubectl get service -n default
+                '''
+            }
         }
     }
 }
-    }
-}
-
