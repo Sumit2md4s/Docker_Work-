@@ -15,8 +15,8 @@ pipeline {
                 echo "Installing Python dependencies..."
 
                 sh '''
-                  
-		     python3 -m venv .venv
+
+                     python3 -m venv .venv
 
                     .venv/bin/pip install -r Kubernetes-project/app/requirement.txt
 
@@ -39,14 +39,37 @@ pipeline {
             }
         }
 
-	stage('Docker Build') {
-	    steps {
-	        echo  "BUilding apllication on docker"
+        stage('Docker Build') {
+            steps {
+                echo  "BUilding apllication on docker"
 
-		sh '''
-		docker build -f Kubernetes-project/docker/dockerfile -t python-app:latest Kubernetes-project
-		'''
-		  }
-		 }
+                sh '''
+                docker build -f Kubernetes-project/docker/dockerfile -t python-app:latest Kubernetes-project
+                '''
+                  }
+                 }
+                 
+        stage('Docker Push') {
+            steps {
+             echo "Pushing Docker image to Docker Hub..."
+
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USERNAME',
+            passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+            sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+                docker tag python-app:latest $DOCKER_USERNAME/python-app:latest
+
+                docker push $DOCKER_USERNAME/python-app:latest
+
+                docker logout
+            '''
+        }
     }
 }
+    }
+}
+
