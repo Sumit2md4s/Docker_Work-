@@ -68,7 +68,7 @@ pipeline {
 
                     withCredentials([
                         string(
-                            credentialsId: 'sonar-token',
+                            credentialsId: 'sonar_token',
                             variable: 'SONAR_TOKEN'
                         )
                     ]) {
