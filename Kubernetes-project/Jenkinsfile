@@ -8,13 +8,21 @@ pipeline {
 
     stages {
 
+        // =========================================================
+        // 1. CHECKOUT
+        // =========================================================
         stage('Checkout') {
             steps {
                 echo "Checking out source code..."
+
                 checkout scm
             }
         }
 
+
+        // =========================================================
+        // 2. BUILD
+        // =========================================================
         stage('Build') {
             steps {
                 echo "Installing Python dependencies..."
@@ -32,6 +40,10 @@ pipeline {
             }
         }
 
+
+        // =========================================================
+        // 3. TEST
+        // =========================================================
         stage('Test') {
             steps {
                 echo "Running application test..."
@@ -45,6 +57,39 @@ pipeline {
             }
         }
 
+
+        // =========================================================
+        // 4. SONARQUBE ANALYSIS
+        // =========================================================
+        stage('SonarQube Analysis') {
+            steps {
+
+                withSonarQubeEnv('sonarqube') {
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            cd Kubernetes-project
+
+                            /opt/sonar-venv/bin/pysonar \
+                                --sonar-host-url "$SONAR_HOST_URL" \
+                                --sonar-token "$SONAR_TOKEN" \
+                                --sonar-project-key "python-app"
+                        '''
+                    }
+                }
+            }
+        }
+
+
+        // =========================================================
+        // 5. DOCKER BUILD
+        // =========================================================
         stage('Docker Build') {
             steps {
                 echo "Building Docker image..."
@@ -58,15 +103,21 @@ pipeline {
             }
         }
 
+
+        // =========================================================
+        // 6. DOCKER PUSH
+        // =========================================================
         stage('Docker Push') {
             steps {
                 echo "Pushing Docker image to Docker Hub..."
 
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USERNAME',
-                    passwordVariable: 'DOCKER_PASSWORD'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
 
                     sh '''
                         echo "$DOCKER_PASSWORD" | \
@@ -82,6 +133,10 @@ pipeline {
             }
         }
 
+
+        // =========================================================
+        // 7. DEPLOY TO KUBERNETES
+        // =========================================================
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Deploying application to Kubernetes..."
@@ -98,13 +153,19 @@ pipeline {
             }
         }
 
+
+        // =========================================================
+        // 8. VERIFY DEPLOYMENT
+        // =========================================================
         stage('Verify Deployment') {
             steps {
                 echo "Verifying Kubernetes deployment..."
 
                 sh '''
                     kubectl get deployment k8-deployment -n default
+
                     kubectl get pods -n default
+
                     kubectl get service -n default
                 '''
             }
