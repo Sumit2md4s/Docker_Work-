@@ -61,28 +61,6 @@ pipeline {
             }
         }
 
-	stage('Test Sonar Settings API') {
-    steps {
-        withSonarQubeEnv('sonarqube') {
-            withCredentials([
-                string(credentialsId: 'sonar_token', variable: 'SONAR_TOKEN')
-            ]) {
-                sh '''
-                    echo "Testing SonarQube settings API..."
-
-                    curl -sS \
-                        -u "$SONAR_TOKEN:" \
-                        -w "\\nHTTP_STATUS=%{http_code}\\n" \
-                        "$SONAR_HOST_URL/api/settings/values.protobuf" \
-                        -o /tmp/sonar-settings.protobuf
-
-                    echo "Response size:"
-                    wc -c /tmp/sonar-settings.protobuf
-                '''
-            }
-        }
-    }
-}
 
 
 
@@ -109,6 +87,8 @@ pipeline {
                                 --sonar-host-url "$SONAR_HOST_URL" \
                                 --sonar-token "$SONAR_TOKEN" \
                                 --sonar-project-key "python-app"
+
+			      --verbose
                         '''
                     }
                 }
