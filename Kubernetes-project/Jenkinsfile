@@ -61,6 +61,26 @@ pipeline {
             }
         }
 
+	stage('Test Sonar Authentication') {
+    steps {
+        withSonarQubeEnv('sonarqube') {
+            withCredentials([
+                string(credentialsId: 'sonar_token', variable: 'SONAR_TOKEN')
+            ]) {
+                sh '''
+                    echo "Testing SonarQube authentication..."
+
+                    curl -sS \
+                        -u "$SONAR_TOKEN:" \
+                        "$SONAR_HOST_URL/api/authentication/validate"
+
+                    echo
+                '''
+            }
+        }
+    }
+}
+
 
         // =========================================================
         // 4. SONARQUBE ANALYSIS
