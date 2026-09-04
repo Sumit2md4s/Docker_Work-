@@ -85,26 +85,22 @@ pipeline {
                 }
             }
         }
-        
-	// =========================================================
-	// Sonar qube quality gate
-	// =========================================================
-
-	stage('Quality Gate') {
-            steps {
-              timeout(time: 5, unit: 'MINUTES') {
-              waitForQualityGate abortPipeline: true
-          }
-      }
-   }
-	
-	
-	
-
 
 
         // =========================================================
-        // 5. DOCKER BUILD
+        // 5. SONARQUBE QUALITY GATE
+        // =========================================================
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+
+        // =========================================================
+        // 6. DOCKER BUILD
         // =========================================================
         stage('Docker Build') {
             steps {
@@ -117,11 +113,11 @@ pipeline {
                         Kubernetes-project
                 '''
             }
-        
+        }
 
-	}
+
         // =========================================================
-        // 6. DOCKER PUSH
+        // 7. DOCKER PUSH
         // =========================================================
         stage('Docker Push') {
             steps {
@@ -151,16 +147,24 @@ pipeline {
 
 
         // =========================================================
-        // 7. DEPLOY TO KUBERNETES
+        // 8. DEPLOY TO KUBERNETES
         // =========================================================
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Deploying application to Kubernetes..."
 
                 sh '''
+                    echo "Applying Kubernetes manifests..."
+
+                    kubectl apply -f Kubernetes-project/k8/
+
+                    echo "Updating application image..."
+
                     kubectl set image deployment/k8-deployment \
                         pythonapp-cont=$IMAGE_TAG \
                         -n default
+
+                    echo "Waiting for rollout..."
 
                     kubectl rollout status deployment/k8-deployment \
                         -n default \
@@ -171,7 +175,7 @@ pipeline {
 
 
         // =========================================================
-        // 8. VERIFY DEPLOYMENT
+        // 9. VERIFY DEPLOYMENT
         // =========================================================
         stage('Verify Deployment') {
             steps {
