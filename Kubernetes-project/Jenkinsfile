@@ -52,6 +52,8 @@ pipeline {
                     .venv/bin/python -m py_compile \
                         Kubernetes-project/app/app.py
 
+			rm -rf Kubernetes-project/app/__pycache__
+
                     echo "Test completed successfully"
                 '''
             }
