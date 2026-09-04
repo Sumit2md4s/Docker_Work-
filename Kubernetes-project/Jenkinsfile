@@ -160,8 +160,15 @@ pipeline {
                 sh '''
                     echo "Applying Kubernetes manifests..."
 
-                   // kubectl apply -f Kubernetes-project/k8/ 
-		   find Kubernetes-project/k8 -type f -name "*.yaml" ! -name "namespace.yaml" -exec kubectl apply -f {} \;
+                    kubectl apply -f Kubernetes-project/k8/configMap.yaml
+                    kubectl apply -f Kubernetes-project/k8/cronjob.yaml
+                    kubectl apply -f Kubernetes-project/k8/ingress.yaml
+                    kubectl apply -f Kubernetes-project/k8/job.yaml
+                    kubectl apply -f Kubernetes-project/k8/k8deployment.yaml
+                    kubectl apply -f Kubernetes-project/k8/pvc.yaml
+                    kubectl apply -f Kubernetes-project/k8/rbac.yaml
+                    kubectl apply -f Kubernetes-project/k8/secret.yaml
+                    kubectl apply -f Kubernetes-project/k8/service.yaml
 
                     echo "Updating application image..."
 
