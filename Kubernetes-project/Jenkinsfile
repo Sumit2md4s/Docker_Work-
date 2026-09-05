@@ -116,6 +116,24 @@ pipeline {
             }
         }
 
+	// =========================================================
+	// Creating build metadata and archive it in build-info.txt 
+	// =========================================================
+
+	stage('Create Build Metadata and archive the file') {
+	    steps {
+	    	echo "Creating build metadata"
+		sh '''
+		echo "Build number: $BUILD_NUMBER" > build-info.txt
+		echo "Docker image: $IMAGE_TAG" >> build-info.txt
+		cat build-info.txt 
+		'''
+		archiveArtifacts artifacts: 'build-info.txt'
+		}
+
+	}
+
+
 
         // =========================================================
         // 7. DOCKER PUSH
@@ -151,6 +169,9 @@ pipeline {
         // 8. DEPLOY TO KUBERNETES
         // =========================================================
         stage('Deploy to Kubernetes') {
+	    when {
+	    branch 'kubernetes-project'
+	    }
             steps {
                 echo "Deploying application to Kubernetes..."
 
