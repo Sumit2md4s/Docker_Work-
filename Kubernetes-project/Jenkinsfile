@@ -168,10 +168,7 @@ pipeline {
         // =========================================================
         // 8. DEPLOY TO KUBERNETES
         // =========================================================
-        stage('Deploy to Kubernetes') {
-	    when {
-	    branch 'kubernetes-project'
-	    }
+        stage('Deploy to Kubernetes') {  
             steps {
                 echo "Deploying application to Kubernetes..."
 
